@@ -12,7 +12,6 @@ namespace InviteManager
         private readonly IConfigurationProvider _config;
         private readonly ISlashCommandManager _manager;
         private readonly IButtonManager _buttonManager;
-        private readonly Mutex _mutex = new Mutex();
 
         public Bot(
             DiscordSocketClient client,
@@ -76,23 +75,15 @@ namespace InviteManager
 
         private async Task OnButtonExecuted(SocketMessageComponent component)
         {
-            await Console.Out.WriteLineAsync("Executing mutex wait one");
-            _mutex.WaitOne();
             switch (component.Data.CustomId)
             {
                 case "btn-accept":
                     await _buttonManager.HandleAcceptButton(component);
-                    await Console.Out.WriteLineAsync("Releasing mutex");
-                    _mutex.ReleaseMutex();
                     break;
                 case "btn-suggest":
                     await _buttonManager.HandleRescheduleButton(component);
-                    await Console.Out.WriteLineAsync("Releasing mutex");
-                    _mutex.ReleaseMutex();
                     break;
                 default:
-                    await Console.Out.WriteLineAsync("Releasing mutex");
-                    _mutex.ReleaseMutex();
                     break;
             }
         }

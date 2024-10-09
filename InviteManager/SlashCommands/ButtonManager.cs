@@ -22,58 +22,64 @@ namespace InviteManager.SlashCommands
 
         public async Task HandleAcceptButton(SocketMessageComponent component)
         {
-            var messageId = component.Message.Interaction.Id;
-            Invitation currentInvitation = null;
-            if (_invitationContext.Invitations.TryGetValue(messageId, out currentInvitation))
+            lock ( _invitationContext )
             {
-                if ( string.IsNullOrEmpty(currentInvitation.Message) )
+                var messageId = component.Message.Interaction.Id;
+                Invitation currentInvitation = null;
+                if ( _invitationContext.Invitations.TryGetValue(messageId, out currentInvitation) )
                 {
-                    currentInvitation.Message = component.Message.Content;
-                }
-                var currentUserId = component.User.Id;
-
-                if ( !currentInvitation.UsersReacted.Contains(currentUserId) )
-                {
-                    currentInvitation.UsersReacted.Add(currentUserId);
-                    if ( !currentInvitation.IsFull )
+                    if ( string.IsNullOrEmpty(currentInvitation.Message) )
                     {
-                        currentInvitation.Count++;
-                        var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.WhiteCheckmark)} [{currentInvitation.Count}/{currentInvitation.MaximumCapacity}] {component.User.GlobalName} has reserved a slot at {component.CreatedAt.ToLocalTime().ToString("HH:mm")}";
-                        currentInvitation.Message = newMessage;
-                        await component.UpdateAsync(message => message.Content = newMessage);
+                        currentInvitation.Message = component.Message.Content;
+                    }
+                    var currentUserId = component.User.Id;
+
+                    if ( !currentInvitation.UsersReacted.Contains(currentUserId) )
+                    {
+                        currentInvitation.UsersReacted.Add(currentUserId);
+                        if ( !currentInvitation.IsFull )
+                        {
+                            currentInvitation.Count++;
+                            var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.WhiteCheckmark)} [{currentInvitation.Count}/{currentInvitation.MaximumCapacity}] {component.User.GlobalName} has reserved a slot at {component.CreatedAt.ToLocalTime().ToString("HH:mm")}";
+                            currentInvitation.Message = newMessage;
+                            component.UpdateAsync(message => message.Content = newMessage);
+                        }
+                        else
+                        {
+                            var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Crossmark)} {component.User.GlobalName} tried joining but the session was full";
+                            currentInvitation.Message = newMessage;
+                            component.UpdateAsync(message => message.Content = newMessage);
+                        }
                     }
                     else
                     {
-                        var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Crossmark)} {component.User.GlobalName} tried joining but the session was full";
-                        currentInvitation.Message = newMessage;
-                        await component.UpdateAsync(message => message.Content = newMessage);
+                        component.RespondAsync(text: "Sorry, but you have already reacted to this invite", ephemeral: true);
                     }
-                }
-                else
-                {
-                    await component.RespondAsync(text: "Sorry, but you have already reacted to this invite", ephemeral: true);
                 }
             }
         }
 
         public async Task HandleRescheduleButton(SocketMessageComponent component)
         {
-            var messageId = component.Message.Interaction.Id;
-            Invitation currentInvitation = null;
-            if ( _invitationContext.Invitations.TryGetValue(messageId, out currentInvitation) )
+            lock ( _invitationContext )
             {
-                var currentUserId = component.User.Id;
+                var messageId = component.Message.Interaction.Id;
+                Invitation currentInvitation = null;
+                if ( _invitationContext.Invitations.TryGetValue(messageId, out currentInvitation) )
+                {
+                    var currentUserId = component.User.Id;
 
-                if ( !currentInvitation.UsersReacted.Contains(currentUserId) )
-                {
-                    var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} suggests rescheduling to a different time";
-                    currentInvitation.Message = newMessage;
-                    currentInvitation.UsersReacted.Add(currentUserId);
-                    await component.UpdateAsync(message => message.Content = $"{component.Message.Content}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} suggests rescheduling to a different time");
-                }
-                else
-                {
-                    await component.RespondAsync(text: "Sorry, but you have already reacted to this invite", ephemeral: true );
+                    if ( !currentInvitation.UsersReacted.Contains(currentUserId) )
+                    {
+                        var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} suggests rescheduling to a different time";
+                        currentInvitation.Message = newMessage;
+                        currentInvitation.UsersReacted.Add(currentUserId);
+                        component.UpdateAsync(message => message.Content = $"{component.Message.Content}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} suggests rescheduling to a different time");
+                    }
+                    else
+                    {
+                        component.RespondAsync(text: "Sorry, but you have already reacted to this invite", ephemeral: true);
+                    }
                 }
             }
         }
