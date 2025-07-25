@@ -40,13 +40,13 @@ namespace InviteManager.SlashCommands
                         if ( !currentInvitation.IsFull )
                         {
                             currentInvitation.Count++;
-                            var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.WhiteCheckmark)} [{currentInvitation.Count}/{currentInvitation.MaximumCapacity}] {component.User.GlobalName} has reserved a slot at {component.CreatedAt.ToLocalTime().ToString("HH:mm")}";
+                            var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.WhiteCheckmark)} [{currentInvitation.Count}/{currentInvitation.MaximumCapacity}] {component.User.GlobalName} ({component.User.Username}) has reserved a slot at {component.CreatedAt.ToLocalTime().ToString("HH:mm")}";
                             currentInvitation.Message = newMessage;
                             component.UpdateAsync(message => message.Content = newMessage);
                         }
                         else
                         {
-                            var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Crossmark)} {component.User.GlobalName} tried joining but the session was full";
+                            var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Crossmark)} {component.User.GlobalName} ({component.User.Username}) tried joining but the session was full";
                             currentInvitation.Message = newMessage;
                             component.UpdateAsync(message => message.Content = newMessage);
                         }
@@ -64,17 +64,16 @@ namespace InviteManager.SlashCommands
             lock ( _invitationContext )
             {
                 var messageId = component.Message.Interaction.Id;
-                Invitation currentInvitation = null;
-                if ( _invitationContext.Invitations.TryGetValue(messageId, out currentInvitation) )
+                if ( _invitationContext.Invitations.TryGetValue(messageId, out Invitation currentInvitation) )
                 {
                     var currentUserId = component.User.Id;
 
                     if ( !currentInvitation.UsersReacted.Contains(currentUserId) )
                     {
-                        var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} suggests rescheduling to a different time";
+                        var newMessage = $"{currentInvitation.Message}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} ({component.User.Username}) suggests rescheduling to a different time";
                         currentInvitation.Message = newMessage;
                         currentInvitation.UsersReacted.Add(currentUserId);
-                        component.UpdateAsync(message => message.Content = $"{component.Message.Content}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} suggests rescheduling to a different time");
+                        component.UpdateAsync(message => message.Content = $"{component.Message.Content}\n > {new Emoji(Constants.Emojis.Timer)} {component.User.GlobalName} ({component.User.Username}) suggests rescheduling to a different time");
                     }
                     else
                     {

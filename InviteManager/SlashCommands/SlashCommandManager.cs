@@ -31,7 +31,7 @@ namespace InviteManager.SlashCommands
                 await _invitationContext.AddInvitation(cmd.Id, max, game, time);
                 builder.WithButton(label: "I will be there", customId: "btn-accept", style: ButtonStyle.Primary, emote: new Emoji(Constants.Emojis.WhiteCheckmark));
                 builder.WithButton(label: "Let's rechedule", customId: "btn-suggest", style: ButtonStyle.Secondary, emote: new Emoji(Constants.Emojis.Timer));
-                await cmd.RespondAsync($"# 🇺🇦 {game} | {time} 🇷🇺 \n > {cmd.User.GlobalName} ({cmd.User.Username}) invites everyone to play **{game}** at **{time}**", components: builder.Build());
+                await cmd.RespondAsync($"{game} | {time} \n > {cmd.User.GlobalName} ({cmd.User.Username}) invites everyone to play **{game}** at **{time}**", components: builder.Build());
             }
             catch (Exception ex)
             {
